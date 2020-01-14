@@ -111,6 +111,7 @@ check.dependsOn funcTest
 gretty {
     integrationTestTask = "funcTest"
     contextPath = "todo"
+    httpPort = 8090
 }
 
 eclipse {
