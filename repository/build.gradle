@@ -44,7 +44,7 @@ ext {
 task startH2(type: JavaExecAsync) {
     classpath = configurations.h2
     main = "org.h2.tools.Server"
-    args = ["-tcp", "-tcpPort", "$tcpPort", "-tcpPassword", "$tcpPassword"]
+    args = ["-tcp", "-tcpPort", "$tcpPort", "-tcpPassword", "$tcpPassword", "-ifNotExists"]
 }
 
 task stopH2(type: JavaExec) {
