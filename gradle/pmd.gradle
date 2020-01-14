@@ -1,0 +1,5 @@
+apply plugin: "pmd"
+pmd {
+    toolVersion = '6.20.0'
+    ignoreFailures = true
+}

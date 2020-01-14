@@ -1,0 +1,316 @@
+import org.akhikhl.gretty.AppStartTask
+import org.gradle.plugins.ide.eclipse.model.Facet
+
+import java.util.concurrent.Executors
+
+buildscript {
+    repositories {
+        jcenter()
+        mavenCentral()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+    dependencies {
+        classpath "gradle.plugin.org.gretty:gretty:3.0.1"
+    }
+}
+
+apply plugin: 'war'
+apply plugin: 'groovy'
+apply plugin: 'maven'
+apply plugin: "org.gretty"
+apply plugin: 'eclipse-wtp'
+
+repositories {
+    jcenter()
+    mavenCentral()
+    maven {
+        url "https://plugins.gradle.org/m2/"
+    }
+    ivy {
+        name 'JQuery'
+        url "http://code.jquery.com/"
+        patternLayout {
+            artifact '[module]-[revision](.[classifier]).[ext]'
+        }
+    }
+    ivy {
+        //https://raw.githubusercontent.com/jshint/jshint/2.6.1/dist/jshint-rhino.js
+        name 'JSHint'
+        url 'https://raw.githubusercontent.com/jshint/jshint'
+        patternLayout {
+//            artifact '[module]-[revision](.[classifier]).[ext]'
+            artifact '[revision]/dist/[module].[ext]'
+        }
+    }
+}
+
+dependencies {
+    implementation project(':repository')
+    implementation project(':model')
+    implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.1'
+    implementation 'org.codehaus.groovy:groovy:2.5.8'
+    implementation 'org.scala-lang:scala-library:2.13.1'
+    implementation 'org.slf4j:slf4j-api:1.7.30'
+
+
+
+    providedCompile 'javax.servlet:servlet-api:2.5'
+    runtimeOnly 'javax.servlet:jstl:1.2'
+    testImplementation 'junit:junit:4.12'
+}
+
+
+sourceSets {
+    funcTest {
+        groovy.srcDirs "src/funcTest/groovy"
+        resources.srcDirs "src/funcTest/resources"
+
+        compileClasspath = main.runtimeClasspath + test.runtimeClasspath + main.output + configurations.funcTestCompile
+        runtimeClasspath = compileClasspath + output + configurations.funcTestRuntime
+    }
+}
+
+/*
+
+sourceSets {
+    integration {
+        java.srcDirs "src/integration/java"
+        resources.srcDirs "src/integration/resources"
+        compileClasspath = main.runtimeClasspath + test.runtimeClasspath + main.output
+        runtimeClasspath = compileClasspath + output
+    }
+}
+ */
+
+/*
+configurations {
+    funcTestImplementation.extendsFrom testImplementation
+    funcTestImplementation.canBeResolved = true
+    funcTestRuntime.extendsFrom
+}
+*/
+
+dependencies {
+    funcTestCompile 'org.codehaus.groovy:groovy-all:2.5.8'
+    funcTestCompile("org.gebish:geb-junit4:3.2") {
+        exclude group: "org.codehaus.groovy", module: "groovy-all"
+    }
+    funcTestCompile "org.seleniumhq.selenium:selenium-api:3.141.59"
+    funcTestRuntime "org.seleniumhq.selenium:selenium-chrome-driver:3.141.59"
+}
+
+task funcTest(type: Test) {
+    testClassesDirs = sourceSets.funcTest.output.classesDirs
+    classpath = sourceSets.funcTest.runtimeClasspath
+    systemProperty 'geb.build.reportsDir', "$buildDir/test/$name/geb"
+}
+
+check.dependsOn funcTest
+gretty {
+    integrationTestTask = "funcTest"
+    contextPath = "todo"
+}
+
+eclipse {
+    classpath {
+        plusConfigurations << configurations.funcTestCompile
+        plusConfigurations << configurations.funcTestRuntime
+    }
+    wtp {
+        facet {
+            file {
+                whenMerged { wtpComponent ->
+                    wtpComponent.facets << new Facet("wst.jsdt.web", "1.0")
+                }
+            }
+        }
+        component {
+            contextPath = "todo"
+        }
+    }
+}
+
+idea {
+    module {
+        sourceSets.funcTest.allSource.srcDirs.each {
+            testSourceDirs += it
+        }
+        scopes.TEST.plus += [configurations.funcTestCompile]
+        scopes.TEST.plus += [configurations.funcTestRuntime]
+    }
+}
+
+
+configurations {
+    h2
+}
+
+dependencies {
+    h2 'com.h2database:h2:1.4.200'
+}
+
+ext {
+    tcpPort = 1300
+    tcpPassword = "fuck"
+}
+
+task startH2(type: JavaExecAsync) {
+    classpath = configurations.h2
+    main = "org.h2.tools.Server"
+    args = ["-tcp", "-tcpPort", "$tcpPort", "-tcpPassword", "$tcpPassword"]
+}
+
+
+task stopH2(type: JavaExec) {
+    classpath = configurations.h2
+    main = "org.h2.tools.Server"
+    args = ["-tcpShutdown", "tcp://localhost:$tcpPort", "-tcpPassword", "$tcpPassword"]
+}
+
+tasks.withType(AppStartTask) {
+    dependsOn fetchExternalJs, startH2
+    finalizedBy stopH2
+}
+
+configurations {
+    jquery
+    googleClosure
+    rhino
+    jshint
+}
+
+dependencies {
+    jquery group: 'jquery', name: 'jquery', version: '1.10.0', classifier: 'min', ext: 'js'
+    googleClosure group: 'com.google.javascript', name: 'closure-compiler', version: 'v20130603'
+    rhino group: 'org.mozilla', name: 'rhino', version: '1.7.11'
+    jshint 'jshint-rhino:jshint-rhino:2.6.1@js'
+}
+
+task fetchExternalJs(type: Copy) {
+    from configurations.jquery
+    into "$webAppDir/js/ext"
+}
+
+class CompileJs extends DefaultTask {
+    @InputFiles
+    FileCollection jsInputs
+    @OutputFile
+    File jsOutput
+
+    @TaskAction
+    void action() {
+        ant.taskdef(name: "jscomp", classname: "com.google.javascript.jscomp.ant.CompileTask",
+                classpath: project.configurations.googleClosure.asPath)
+        ant.jscomp(compilationLevel: "simple", debug: "false", output: jsOutput.canonicalPath) {
+            jsInputs.each { f ->
+                ant.sources(dir: f.parent) {
+                    ant.file(name: f.name)
+                }
+            }
+        }
+    }
+}
+
+
+task minifyJs(type: CompileJs) {
+    jsInputs = fileTree("$webAppDir/js/app").include("*.js")
+    jsOutput = file("$buildDir/js/min-all.js")
+}
+
+war {
+    if (project.hasProperty("jsOptimized")) {
+        dependsOn minifyJs
+
+        exclude "js/app/*.js"
+        exclude "jsp/app-js.jsp"
+
+        from("$buildDir/js") {
+            into "js/app"
+            include "min-all.js"
+        }
+
+        from("$webAppDir/jsp") {
+            include "todo-list.jsp"
+            into "jsp"
+            filter { line ->
+                if (line.contains("<c:import url=\"app-js.jsp\"/>")) {
+                    return line.replace("<c:import url=\"app-js.jsp\"/>", "<c:import url=\"app-js-min.jsp\"/>")
+                } else {
+                    return line
+                }
+            }
+        }
+    }
+}
+
+task codeQualityCheck(type: JavaExec) {
+    classpath = configurations.rhino
+    main = "org.mozilla.javascript.tools.shell.Main"
+    args = configurations.jshint + fileTree("$webAppDir/js/app").include("*.js")
+}
+
+task installGruntDependencies(type: Exec) {
+    inputs.file "package.json"
+    outputs.dir "node-modules"
+
+    executable "npm"
+    args "install"
+}
+
+task jsHint(type: Exec, dependsOn: installGruntDependencies) {
+    inputs.files fileTree("$webAppDir/js/app").include("*.js")
+    outputs.upToDateWhen { true }
+    executable "grunt"
+    args "jshint"
+}
+
+class JavaExecAsync extends JavaExec {
+    @Override
+    @TaskAction
+    void exec() {
+        Executors.newSingleThreadExecutor().submit {
+            super.exec()
+        }
+        println "--------------------"
+        Thread.sleep(1000)
+    }
+}
+
+
+tasks.withType(JacocoReport) {
+    executionData.from = fileTree(buildDir).include("/jacoco/*.exec")
+}
+
+tasks.withType(Test) {
+    testLogging {
+        showStandardStreams = true
+        events = ["PASSED", "SKIPPED", "FAILED", "STANDARD_OUT", "STANDARD_ERROR"]
+    }
+    filter {
+        failOnNoMatchingTests = false
+    }
+    afterSuite { TestDescriptor td, TestResult r ->
+        if (td.parent == null) {
+            println "testCount: ${r.testCount}, successful: ${r.successfulTestCount}, skipped: ${r.skippedTestCount}, failed: ${r.failedTestCount}, elapsed: ${r.endTime - r.startTime} ms"
+        }
+    }
+}
+
+sonarqube {
+    properties {
+//        properties["sonar.tests"] += sourceSets.funcTest.allSource.srcDirs.findAll { it.exists() }
+        properties["sonar.tests"] += ["src/funcTest/groovy"]
+        if (properties["sonar.junit.reportPaths"] == null) {
+            properties["sonar.junit.reportPaths"] = ["$buildDir/test-results/funcTest"]
+        } else {
+            properties["sonar.junit.reportPaths"] += "$buildDir/test-results/funcTest"
+        }
+
+        println "-------------------------------------------------"
+        println "properties[\"sonar.tests\"]: ${properties['sonar.tests']}"
+        println "properties[\"sonar.junit.reportPaths\"]: ${properties['sonar.junit.reportPaths']}"
+        println "-------------------------------------------------"
+    }
+}

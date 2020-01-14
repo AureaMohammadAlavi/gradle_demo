@@ -1,0 +1,6 @@
+apply plugin: "checkstyle"
+checkstyle {
+    toolVersion = '8.28'
+    ignoreFailures = true
+    configFile = new File("$rootDir/config/checkstyle", "sun_checks.xml")
+}

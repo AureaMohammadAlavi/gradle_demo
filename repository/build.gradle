@@ -1,0 +1,137 @@
+import java.util.concurrent.Executors
+
+apply plugin: "groovy"
+
+dependencies {
+    implementation project(':model')
+    implementation 'org.codehaus.groovy:groovy:2.5.8'
+    implementation 'org.scala-lang:scala-library:2.13.1'
+    implementation 'org.slf4j:slf4j-api:1.7.30'
+
+
+
+    testImplementation 'junit:junit:4.12'
+
+    testImplementation 'org.assertj:assertj-core:3.14.0'
+
+    runtime 'com.h2database:h2:1.4.200'
+}
+
+sourceSets {
+    main {
+        groovy {
+            srcDirs = ["src/main/java", "src/main/groovy"]
+        }
+        java {
+            srcDirs = []
+        }
+    }
+}
+
+configurations {
+    h2
+}
+
+dependencies {
+    h2 'com.h2database:h2:1.4.200'
+}
+
+ext {
+    tcpPort = 1300
+    tcpPassword = "fuck"
+}
+
+task startH2(type: JavaExecAsync) {
+    classpath = configurations.h2
+    main = "org.h2.tools.Server"
+    args = ["-tcp", "-tcpPort", "$tcpPort", "-tcpPassword", "$tcpPassword"]
+}
+
+task stopH2(type: JavaExec) {
+    classpath = configurations.h2
+    main = "org.h2.tools.Server"
+    args = ["-tcpShutdown", "tcp://localhost:$tcpPort", "-tcpPassword", "$tcpPassword"]
+}
+
+task createTables(type: JavaExec, dependsOn: startH2) {
+    classpath = configurations.h2
+    main = "org.h2.tools.RunScript"
+    args = ["-url", "jdbc:h2:tcp://localhost:$tcpPort/~/todo", "-script", "$buildDir/resources/main/create-todo.sql", "-user", "sa"]
+}
+
+
+tasks.withType(Test) {
+    testLogging {
+        showStandardStreams = true
+        events = ["PASSED", "SKIPPED", "FAILED", "STANDARD_OUT", "STANDARD_ERROR"]
+    }
+    filter {
+        failOnNoMatchingTests = false
+    }
+    afterSuite { TestDescriptor td, TestResult r ->
+        if (td.parent == null) {
+            println "testCount: ${r.testCount}, successful: ${r.successfulTestCount}, skipped: ${r.skippedTestCount}, failed: ${r.failedTestCount}, elapsed: ${r.endTime - r.startTime} ms"
+        }
+    }
+}
+
+test {
+    reports.html.destination = file(reports.html.destination.path + "/unit")
+    reports.junitXml.destination = file(reports.junitXml.destination.path + "/unit")
+}
+
+
+sourceSets {
+    integration {
+        java.srcDirs "src/integration/java"
+        resources.srcDirs "src/integration/resources"
+        compileClasspath = main.runtimeClasspath + test.runtimeClasspath + main.output
+        runtimeClasspath = compileClasspath + output
+    }
+}
+
+idea {
+    module {
+        sourceSets.integration.allSource.srcDirs.each {
+            testSourceDirs += it
+        }
+    }
+}
+
+task integrationTest(type: Test, dependsOn: createTables) {
+    testClassesDirs = sourceSets.integration.output.classesDirs
+    classpath = sourceSets.integration.runtimeClasspath
+    shouldRunAfter test
+    finalizedBy stopH2
+}
+
+check.dependsOn(integrationTest)
+
+class JavaExecAsync extends JavaExec {
+    @Override
+    @TaskAction
+    void exec() {
+        Executors.newSingleThreadExecutor().submit {
+            super.exec()
+        }
+        Thread.sleep(1000)
+    }
+}
+
+
+tasks.withType(JacocoReport) {
+    executionData test, integrationTest
+}
+
+sonarqube {
+    properties {
+        properties["sonar.tests"] += sourceSets.integration.allSource.srcDirs.findAll {it.exists()}
+        properties["sonar.junit.reportPaths"] += "$buildDir/test-results/integrationTest"
+
+        println "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+        println "properties[\"sonar.sources\"]: ${properties['sonar.sources']}"
+        println "properties[\"sonar.tests\"]: ${properties['sonar.tests']}"
+        println "properties[\"sonar.junit.reportPaths\"]: ${properties['sonar.junit.reportPaths']}"
+        println "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+    }
+}

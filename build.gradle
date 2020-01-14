@@ -1,0 +1,104 @@
+import me.smash.XmlToHtml
+import com.github.spotbugs.SpotBugsTask
+
+buildscript {
+    repositories {
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+    dependencies {
+        classpath "com.github.spotbugs:spotbugs-gradle-plugin:3.0.0"
+        classpath "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:2.8"
+    }
+}
+
+
+apply plugin: "org.sonarqube"
+
+
+
+allprojects {
+    group = "me.smash"
+    version = "1.0.0"
+    repositories {
+        jcenter()
+        mavenCentral()
+    }
+
+    apply plugin: 'eclipse'
+    apply plugin: 'idea'
+}
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'jacoco'
+    sourceCompatibility = "1.8"
+    targetCompatibility = "1.8"
+/*
+    apply from: "$rootDir/gradle/checkstyle.gradle"
+    apply from: "$rootDir/gradle/pmd.gradle"
+    apply from: "$rootDir/gradle/spotbugs.gradle"
+    apply from: "$rootDir/gradle/jdepend.gradle"
+*/
+
+    jacocoTestReport {
+        reports {
+            xml.enabled true
+        }
+    }
+
+
+    tasks.withType(SpotBugsTask) {
+        reports {
+            xml.enabled = false
+            html.enabled = true
+        }
+    }
+
+    afterEvaluate {
+        plugins.withType(JDependPlugin) {
+            sourceSets.each { sourceSet ->
+                def checkStyleTaskName = "jdepend${sourceSet.name.capitalize()}"
+                def checkStyleTask = tasks.getByName(checkStyleTaskName)
+
+                File xmlFile = checkStyleTask.outputs.files.filter { it.name.endsWith(".xml") }.singleFile
+                if (xmlFile.exists()) {
+                    XmlToHtml reportTask = tasks.create("${checkStyleTaskName}Report", XmlToHtml)
+                    checkStyleTask.finalizedBy reportTask
+                    reportTask.xmlFile = xmlFile
+                    reportTask.styleFile = file("$rootDir/config/jdepend/jdepend-report.xslt")
+                    reportTask.htmlFile = file("$buildDir/jdepend/${checkStyleTaskName}.html")
+                }
+            }
+        }
+    }
+
+}
+
+eclipse {
+    project {
+        name = "todo"
+        comment = "todo project"
+        referencedProjects 'model', 'repository', 'web'
+    }
+}
+
+idea {
+    project {
+        ipr.withXml { provider ->
+            def node = provider.asNode()
+            def gradleSettings = node.appendNode('component', [name: 'GradleSettings'])
+            gradleSettings.appendNode('option', [name: 'linkedProjectPath', value: '$PROJECT_DIR$/build.gradle'])
+        }
+    }
+}
+
+task toHtml(type: XmlToHtml) {
+    xmlFile = file("$projectDir/student.xml")
+    htmlFile = file("$projectDir/student.html")
+    styleFile = file("$projectDir/student_html.xsl")
+}
+
+
+
