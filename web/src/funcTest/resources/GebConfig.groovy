@@ -7,8 +7,12 @@ waiting {
 reportsDir = "build/test/funcTest/geb"
 environments {
     remote {
-        driver = { new RemoteWebDriver(new URL("http://blueo-selenium:4444/wd/hub"), DesiredCapabilities.chrome()) }
+        driver = {
+            def url = new URL(System.getenv("REMOTE_WEB_DRIVER_URL") ?:
+                    "http://localhost:4444/wd/hub")
+            new RemoteWebDriver(url, DesiredCapabilities.chrome())
+        }
     }
-}
 
-baseUrl = "http://jenkins-blueocean:8090/"
+    baseUrl = System.getenv('SERVER_BASE_URL') ?: "http://host.docker.internal:8090/"
+}
