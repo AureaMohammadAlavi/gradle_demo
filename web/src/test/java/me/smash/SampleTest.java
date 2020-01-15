@@ -16,7 +16,7 @@ public class SampleTest {
   private WebDriver webDriver;
   @Before
   public void setUp() throws MalformedURLException {
-    webDriver = new RemoteWebDriver(new URL("http://localhost:4444/wd/hub"),
+    webDriver = new RemoteWebDriver(new URL("http://172.18.0.4:4444/wd/hub"),
         new ChromeOptions());
   }
 
