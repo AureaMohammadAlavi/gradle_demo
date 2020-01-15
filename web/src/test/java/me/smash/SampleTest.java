@@ -30,7 +30,7 @@ public class SampleTest {
   @Test
   public void test() throws MalformedURLException {
 
-    webDriver.get("http://localhost:8090");
+    webDriver.get("http://172.18.0.3:8090");
 
     assertEquals("----", webDriver.getTitle());
     webDriver.close();
