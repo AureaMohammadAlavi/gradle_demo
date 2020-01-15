@@ -65,6 +65,7 @@ dependencies {
 sourceSets {
     funcTest {
         groovy.srcDirs "src/funcTest/groovy"
+        java.srcDirs "src/funcTest/java"
         resources.srcDirs "src/funcTest/resources"
 
         compileClasspath = main.runtimeClasspath + test.runtimeClasspath + main.output + configurations.funcTestCompile
