@@ -10,3 +10,5 @@ environments {
         driver = { new RemoteWebDriver(new URL("http://blueo-selenium:4444/wd/hub"), DesiredCapabilities.chrome()) }
     }
 }
+
+baseUrl = "http://jenkins-blueocean:8090/"
