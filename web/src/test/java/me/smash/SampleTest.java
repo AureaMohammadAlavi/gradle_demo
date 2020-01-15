@@ -22,8 +22,9 @@ public class SampleTest {
 
   @After
   public void tearDown() {
-    webDriver.quit();
-
+    if (webDriver != null) {
+      webDriver.quit();
+    }
   }
 
   @Test
