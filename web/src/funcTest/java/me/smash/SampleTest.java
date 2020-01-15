@@ -30,7 +30,7 @@ public class SampleTest {
   @Test
   public void test() throws InterruptedException {
 
-    webDriver.get("http://jenkins-blueocean:8090");
+    webDriver.get("http://jenkins-blueocean:8090/todo");
 
     Thread.sleep(3000);
 
