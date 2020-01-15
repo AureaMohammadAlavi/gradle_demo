@@ -106,6 +106,7 @@ dependencies {
 task funcTest(type: Test) {
     testClassesDirs = sourceSets.funcTest.output.classesDirs
     classpath = sourceSets.funcTest.runtimeClasspath
+    systemProperty 'geb.env', "remote"
 }
 
 check.dependsOn funcTest
