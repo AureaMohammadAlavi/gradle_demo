@@ -98,13 +98,14 @@ dependencies {
         exclude group: "org.codehaus.groovy", module: "groovy-all"
     }
     funcTestCompile "org.seleniumhq.selenium:selenium-api:3.141.59"
-    funcTestRuntime "org.seleniumhq.selenium:selenium-chrome-driver:3.141.59"
+    testImplementation "org.seleniumhq.selenium:selenium-api:3.141.59"
+    funcTestCompile "org.seleniumhq.selenium:selenium-api:3.141.59"
+    testImplementation "org.seleniumhq.selenium:selenium-chrome-driver:3.141.59"
 }
 
 task funcTest(type: Test) {
     testClassesDirs = sourceSets.funcTest.output.classesDirs
     classpath = sourceSets.funcTest.runtimeClasspath
-    systemProperty 'geb.build.reportsDir', "$buildDir/test/$name/geb"
 }
 
 check.dependsOn funcTest
