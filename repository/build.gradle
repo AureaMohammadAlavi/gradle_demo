@@ -75,12 +75,6 @@ tasks.withType(Test) {
     }
 }
 
-test {
-    reports.html.destination = file(reports.html.destination.path + "/unit")
-    reports.junitXml.destination = file(reports.junitXml.destination.path + "/unit")
-}
-
-
 sourceSets {
     integration {
         java.srcDirs "src/integration/java"
