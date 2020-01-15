@@ -32,7 +32,7 @@ public class SampleTest {
 
     webDriver.get("http://jenkins-blueocean:8090");
 
-    Thread.sleep(1000);
+    Thread.sleep(3000);
 
     assertEquals("----", webDriver.getTitle());
     webDriver.close();
