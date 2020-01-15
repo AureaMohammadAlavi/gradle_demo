@@ -16,7 +16,7 @@ public class SampleTest {
   private WebDriver webDriver;
   @Before
   public void setUp() throws MalformedURLException {
-    webDriver = new RemoteWebDriver(new URL("http://172.18.0.4:4444/wd/hub"),
+    webDriver = new RemoteWebDriver(new URL("http://blueo-selenium:4444/wd/hub"),
         new ChromeOptions());
   }
 
@@ -28,9 +28,11 @@ public class SampleTest {
   }
 
   @Test
-  public void test() throws MalformedURLException {
+  public void test() throws MalformedURLException, InterruptedException {
 
-    webDriver.get("http://172.18.0.3:8090");
+    webDriver.get("http://jenkins-blueocean:8090");
+
+    Thread.sleep(1000);
 
     assertEquals("----", webDriver.getTitle());
     webDriver.close();
