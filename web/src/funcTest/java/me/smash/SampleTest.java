@@ -8,7 +8,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
 public class SampleTest {
@@ -17,7 +17,7 @@ public class SampleTest {
   @Before
   public void setUp() throws MalformedURLException {
     webDriver = new RemoteWebDriver(new URL("http://blueo-selenium:4444/wd/hub"),
-        new ChromeOptions());
+        DesiredCapabilities.chrome());
   }
 
   @After

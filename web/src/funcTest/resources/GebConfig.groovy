@@ -7,7 +7,6 @@ waiting {
 reportsDir = "build/test/funcTest/geb"
 environments {
     remote {
-        driver = { new RemoteWebDriver(new URL("http://172.18.0.4:4444"), DesiredCapabilities.chrome()) }
+        driver = { new RemoteWebDriver(new URL("http://blueo-selenium:4444/wd/hub"), DesiredCapabilities.chrome()) }
     }
-
 }

@@ -99,7 +99,8 @@ dependencies {
         exclude group: "org.codehaus.groovy", module: "groovy-all"
     }
     funcTestCompile "org.seleniumhq.selenium:selenium-api:3.141.59"
-    funcTestCompile "org.seleniumhq.selenium:selenium-chrome-driver:3.141.59"
+//    funcTestCompile "org.seleniumhq.selenium:selenium-chrome-driver:3.141.59"
+    funcTestCompile "org.seleniumhq.selenium:selenium-remote-driver:3.141.59"
 }
 
 task funcTest(type: Test) {
