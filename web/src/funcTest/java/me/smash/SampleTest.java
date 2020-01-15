@@ -28,7 +28,7 @@ public class SampleTest {
   }
 
   @Test
-  public void test() throws MalformedURLException, InterruptedException {
+  public void test() throws InterruptedException {
 
     webDriver.get("http://jenkins-blueocean:8090");
 
