@@ -290,7 +290,11 @@ check.dependsOn funcTest
 sonarqube {
     properties {
 //        properties["sonar.tests"] += sourceSets.funcTest.allSource.srcDirs.findAll { it.exists() }
-        properties["sonar.tests"] += ["src/funcTest/groovy"]
+        if (properties["sonar.tests"] == null) {
+            properties["sonar.tests"] = ["src/funcTest/groovy"]
+        } else {
+            properties["sonar.tests"] += ["src/funcTest/groovy"]
+        }
         if (properties["sonar.junit.reportPaths"] == null) {
             properties["sonar.junit.reportPaths"] = ["$buildDir/test-results/funcTest"]
         } else {
