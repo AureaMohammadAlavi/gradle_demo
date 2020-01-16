@@ -10,12 +10,24 @@ buildscript {
     dependencies {
         classpath "com.github.spotbugs:spotbugs-gradle-plugin:3.0.0"
         classpath "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:2.8"
+        classpath "gradle.plugin.com.heroku.sdk:heroku-gradle:1.0.4"
     }
 }
 
 
 apply plugin: "org.sonarqube"
+apply plugin: "com.heroku.sdk.heroku-gradle"
 
+heroku {
+    appName = "smash1986"
+    includeBuildDir = false
+}
+
+gradle.taskGraph.whenReady {
+    String warFile = relativePath(project(":web").tasks.withType(War).first().archiveFile.get()).toString()
+    heroku.includes = [warFile, "webapp-runner-9.0.30.0.jar"]
+    heroku.processTypes(web: "java \$JAVA_OPTS -jar webapp-runner-9.0.30.0.jar --port \$PORT $warFile".toString())
+}
 
 allprojects {
     group = "me.smash"
