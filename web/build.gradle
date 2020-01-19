@@ -307,3 +307,12 @@ sonarqube {
         println "-------------------------------------------------"
     }
 }
+
+publishing {
+    publications {
+        MyPublication(MavenPublication) {
+            from components.web
+        }
+    }
+}
+

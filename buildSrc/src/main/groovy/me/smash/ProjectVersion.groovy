@@ -1,18 +1,24 @@
 package me.smash
 
-class ProjectVersion {
-    int minor
-    int major
-    boolean release
 
-    ProjectVersion(int major, int minor, boolean release) {
-        this.minor = minor
+class ProjectVersion {
+    int major
+    int minor
+    String build
+
+    ProjectVersion(int major, int minor, String build) {
         this.major = major
-        this.release = release
+        this.minor = minor
+        this.build = build
     }
+
 
     @Override
     String toString() {
-        return "$major.$minor${release ? '' : '-SNAPSHOT'}"
+        if (build == null) {
+            return "$major.$minor"
+        } else {
+            return "$major.$minor.$build"
+        }
     }
 }

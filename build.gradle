@@ -1,3 +1,4 @@
+import me.smash.ProjectVersion
 import me.smash.ScpTask
 import me.smash.SshExecTask
 import me.smash.VagrantTask
@@ -34,7 +35,8 @@ gradle.taskGraph.whenReady {
 
 allprojects {
     group = "me.smash"
-    version = "1.0.0"
+    version = new ProjectVersion(1, 0, System.env.BUILD_NUMBER)
+
     repositories {
         jcenter()
         mavenCentral()
@@ -42,6 +44,7 @@ allprojects {
 
     apply plugin: 'eclipse'
     apply plugin: 'idea'
+    apply plugin: "maven-publish"
 
     sonarqube {
         properties {
@@ -94,6 +97,25 @@ subprojects {
         }
     }
 
+
+    publishing {
+        repositories {
+            maven {
+                name = "smash"
+                url = "$rootDir/../smash-repo"
+            }
+
+            maven {
+                name = "bintary"
+                url = "https://api.bintray.com/maven/aureamohammadalavi/smash-repo/my-first-package/;publish=1"
+
+                credentials {
+                    username = "aureamohammadalavi"
+                    password = System.getenv("BINTRAY_API_KEY")
+                }
+            }
+        }
+    }
 }
 
 eclipse {
