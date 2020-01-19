@@ -9,6 +9,7 @@ environments {
         tomcat {
             hostname = "192.168.33.10"
             port = 8080
+            context = "todo"
         }
     }
     production {
@@ -21,6 +22,7 @@ environments {
         tomcat {
             hostname = "192.168.33.10"
             port = 8080
+            context = "todo"
         }
     }
 }

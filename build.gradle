@@ -1,5 +1,6 @@
 import me.smash.ProjectVersion
 import me.smash.ScpTask
+import me.smash.SmokeTestTask
 import me.smash.SshExecTask
 import me.smash.VagrantTask
 import me.smash.XmlToHtml
@@ -244,3 +245,18 @@ task deployWar(type: SshExecTask, dependsOn: [deleteWebApp, copyWarToTmp]) {
 task startTomcat(type: SshExecTask, dependsOn: deployWar) {
     command = "sudo -u tomcat /home/tomcat/apache-tomcat/bin/startup.sh"
 }
+
+tasks.withType(SmokeTestTask) {
+    host = config.tomcat.hostname
+    port = config.tomcat.port
+}
+
+task somkeTomcatPage(type: SmokeTestTask) {
+    path = "/"
+}
+
+task somkeAppPage(type: SmokeTestTask) {
+    path = "/$config.tomcat.context"
+}
+
+task somkeTest(dependsOn: [somkeTomcatPage, somkeAppPage])

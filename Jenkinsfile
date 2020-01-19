@@ -95,7 +95,13 @@ pipeline {
             }
             steps {
                 unstash 'app'
-                gradlew('startTomcat -Penv=production')
+                gradlew('startTomcat', '-Penv=production')
+            }
+        }
+
+        stage('Smoke Test') {
+            steps {
+                gradlew('somkeTest', '-Penv=production')
             }
         }
     }
