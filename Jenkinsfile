@@ -95,7 +95,7 @@ pipeline {
             }
             steps {
                 unstash 'app'
-                gradlew('startTomcat')
+                gradlew('startTomcat -Penv=production')
             }
         }
     }
