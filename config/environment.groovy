@@ -13,7 +13,7 @@ environments {
     }
     production {
         server {
-            hostname = "localhost"
+            hostname = "127.0.0.1"
             sshPort = 2222
             username = "vagrant"
             keyfile = System.getenv().get("SERVER_PRIVATE_KEY_FILE")

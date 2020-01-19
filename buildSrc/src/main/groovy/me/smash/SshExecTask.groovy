@@ -15,12 +15,14 @@ class SshExecTask extends DefaultTask {
     File keyFile
     @Input
     String remoteHost
+    @Input
+    int port = 22
     @InputFiles
     FileCollection classpath
 
     @TaskAction
     void action() {
         ant.taskdef(name: "sshexecJsch", classpath: classpath.asPath, classname: "org.apache.tools.ant.taskdefs.optional.ssh.SSHExec")
-        ant.sshexecJsch(host: remoteHost, username: username, keyfile: keyFile.path, command: command, trust: "true")
+        ant.sshexecJsch(host: remoteHost, username: username, keyfile: keyFile.path, command: command, trust: "true", port: port)
     }
 }

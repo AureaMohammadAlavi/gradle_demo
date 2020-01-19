@@ -41,12 +41,6 @@ if (parsedConfig.server.keyfile) {
     parsedConfig.server.keyfile = parsedConfig.server.keyfile.replace('$projectDir', "$rootDir")
 }
 
-println "---------------------------------------"
-println "username = $parsedConfig.server.username"
-println "remoteHost = $parsedConfig.server.hostname"
-println "keyFile = $parsedConfig.server.keyfile"
-println "---------------------------------------"
-
 allprojects {
     group = "me.smash"
     version = new ProjectVersion(1, 0, System.env.BUILD_NUMBER)
@@ -216,6 +210,7 @@ dependencies {
 tasks.withType(SshExecTask) {
     username = config.server.username
     remoteHost = config.server.hostname
+    port = config.server.sshPort
     keyFile = file(config.server.keyfile)
     classpath = configurations.jsch
 }
@@ -223,6 +218,7 @@ tasks.withType(SshExecTask) {
 task copyWarToTmp(type: ScpTask, dependsOn: ":web:war") {
     username = config.server.username
     destinationDir = "/tmp"
+    port = config.server.sshPort
     remoteHost = config.server.hostname
     keyFile = file(config.server.keyfile)
     classpath = configurations.jsch

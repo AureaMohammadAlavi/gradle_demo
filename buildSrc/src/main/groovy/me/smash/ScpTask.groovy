@@ -18,12 +18,14 @@ class ScpTask extends DefaultTask {
     File keyFile
     @Input
     String remoteHost
+    @Input
+    int port = 22
     @InputFiles
     FileCollection classpath
 
     @TaskAction
     void action() {
         ant.taskdef(name: "scpJsch", classpath: classpath.asPath, classname: "org.apache.tools.ant.taskdefs.optional.ssh.Scp")
-        ant.scpJsch(file: file.path, todir: "$username@$remoteHost:$destinationDir", keyfile: keyFile.canonicalPath, verbose: "true", trust: "yes")
+        ant.scpJsch(file: file.path, todir: "$username@$remoteHost:$destinationDir", keyfile: keyFile.canonicalPath, verbose: "true", trust: "yes", port: port)
     }
 }
