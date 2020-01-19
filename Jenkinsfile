@@ -101,10 +101,12 @@ pipeline {
     }
     post {
         failure {
-            mail to: 'm.alavi1986@gmail.com', subject: 'Build failed', body: "$DEFAULT_CONTENT"
+            mail to: 'm.alavi1986@gmail.com', subject: 'Build failed', body: "${currentBuild.currentResult}: Job ${env.JOB_NAME} build ${env.BUILD_NUMBER}\n More info at: ${env.BUILD_URL}"
+
         }
         success {
-            mail to: 'm.alavi1986@gmail.com', subject: 'Build succeeded', body: "$DEFAULT_CONTENT"
+            mail to: 'm.alavi1986@gmail.com', subject: 'Build succeeded', body: "${currentBuild.currentResult}: Job ${env.JOB_NAME} build ${env.BUILD_NUMBER}\n More info at: ${env.BUILD_URL}"
+
         }
     }
 }
