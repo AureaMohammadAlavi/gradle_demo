@@ -292,6 +292,8 @@ task funcTest(type: Test) {
     testClassesDirs = sourceSets.funcTest.output.classesDirs
     classpath = sourceSets.funcTest.runtimeClasspath
     systemProperty 'geb.env', "remote"
+    systemProperty 'geb.build.baseUrl', System.getenv('SERVER_BASE_URL') ?: "http://host.docker.internal:8090/"
+    systemProperty 'geb.build.reportsDir', "$buildDir/test/$name/geb"
 
     dependsOn fetchExternalJs, startH2
     finalizedBy stopH2
@@ -328,3 +330,10 @@ publishing {
     }
 }
 
+task acceptanceTest(type: Test) {
+    testClassesDirs = sourceSets.funcTest.output.classesDirs
+    classpath = sourceSets.funcTest.runtimeClasspath
+    systemProperty 'geb.env', "remote"
+    systemProperty 'geb.build.baseUrl', "http://${config.tomcat.hostname}:${config.tomcat.port}/"
+    systemProperty 'geb.build.reportsDir', "$buildDir/test/$name/geb"
+}

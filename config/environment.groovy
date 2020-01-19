@@ -17,7 +17,7 @@ environments {
             hostname = "127.0.0.1"
             sshPort = 2222
             username = "vagrant"
-            keyfile = System.getenv().get("SERVER_PRIVATE_KEY_FILE")
+            keyfile = System.getenv().get("SERVER_PRIVATE_KEY_FILE") ?: "/Users/mohammad/Downloads/test/gradle/gradle-demo/tomcat-vagrant/.vagrant/machines/tomcat/virtualbox/private_key"
         }
         tomcat {
             hostname = "192.168.33.10"

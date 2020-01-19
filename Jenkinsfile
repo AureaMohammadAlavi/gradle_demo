@@ -58,7 +58,6 @@ pipeline {
         stage('Assemble') {
             steps {
                 gradlew('assemble -PjsOptimized')
-                stash includes: '**/build/libs/*.war', name: 'app'
             }
         }
 
@@ -94,9 +93,19 @@ pipeline {
                 SERVER_PRIVATE_KEY_FILE = "/Users/mohammad/Downloads/test/gradle/gradle-demo/tomcat-vagrant/.vagrant/machines/tomcat/virtualbox/private_key"
             }
             steps {
-                unstash 'app'
                 gradlew('startTomcat', '-Penv=production')
+            }
+        }
+
+        stage('Somke Test') {
+            steps {
                 gradlew('somkeTest', '-Penv=production')
+            }
+        }
+
+        stage('Acceptance Test') {
+            steps {
+                gradlew('acceptanceTest', '-Penv=production')
             }
         }
     }
