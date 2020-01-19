@@ -1,3 +1,6 @@
+import me.smash.ScpTask
+import me.smash.SshExecTask
+import me.smash.VagrantTask
 import me.smash.XmlToHtml
 import com.github.spotbugs.SpotBugsTask
 
@@ -111,11 +114,97 @@ idea {
     }
 }
 
+task copyFilesToVagrantFiles(type: Copy, dependsOn: ":repository:processResources") {
+    into "$rootDir/tomcat-vagrant/files/"
+}
+
+gradle.taskGraph.whenReady {
+    copyFilesToVagrantFiles.configure {
+        from project(":repository").buildDir.path + "/resources/main/create-todo.sql"
+        from project(":repository").configurations.h2
+    }
+    copyWarToTmp.configure {
+        file = project(":web").tasks.withType(War).first().outputs.files.singleFile
+    }
+}
+
 task toHtml(type: XmlToHtml) {
     xmlFile = file("$projectDir/student.xml")
     htmlFile = file("$projectDir/student.html")
     styleFile = file("$projectDir/student_html.xsl")
 }
 
+task vagrantUp(type: VagrantTask, dependsOn: copyFilesToVagrantFiles) {
+    commands = ["up", "--provision"]
+    dir = file("$rootDir/tomcat-vagrant")
+}
 
+task vagrantRestart(type: VagrantTask, dependsOn: copyFilesToVagrantFiles) {
+    commands = ["reload", "--provision"]
+    dir = file("$rootDir/tomcat-vagrant")
+}
 
+task vagrantDestroy(type: VagrantTask) {
+    commands = ["destroy"]
+    dir = file("$rootDir/tomcat-vagrant")
+}
+
+task vagrantSshConfig(type: VagrantTask) {
+    commands = ["ssh-config"]
+    dir = file("$rootDir/tomcat-vagrant")
+}
+
+task vagrantStatus(type: VagrantTask) {
+    commands = ["status"]
+    dir = file("$rootDir/tomcat-vagrant")
+}
+
+task vagrantSuspend(type: VagrantTask) {
+    commands = ["suspend"]
+    dir = file("$rootDir/tomcat-vagrant")
+}
+
+task vagrantResume(type: VagrantTask) {
+    commands = ["resume"]
+    dir = file("$rootDir/tomcat-vagrant")
+}
+
+configurations {
+    jsch
+}
+dependencies {
+    jsch group: 'org.apache.ant', name: 'ant-jsch', version: '1.10.7'
+}
+
+tasks.withType(SshExecTask) {
+    username = "vagrant"
+    remoteHost = "192.168.33.10"
+    keyFile = file("$rootDir/tomcat-vagrant/.vagrant/machines/tomcat/virtualbox/private_key")
+    classpath = configurations.jsch
+}
+
+task copyWarToTmp(type: ScpTask, dependsOn: ":web:war") {
+    username = "vagrant"
+    destinationDir = "/tmp"
+    remoteHost = "192.168.33.10"
+    keyFile = file("$rootDir/tomcat-vagrant/.vagrant/machines/tomcat/virtualbox/private_key")
+    classpath = configurations.jsch
+}
+
+task shutDownTomcat(type: SshExecTask) {
+    command = "sudo -u tomcat /home/tomcat/apache-tomcat/bin/shutdown.sh"
+}
+
+task deleteWebApp(type: SshExecTask, dependsOn: shutDownTomcat) {
+    command = "sudo -u tomcat rm -rf /home/tomcat/apache-tomcat/webapps/web-1.0.0 && " +
+            "sudo -u tomcat rm /home/tomcat/apache-tomcat/webapps/web-1.0.0.war || true && " +
+            "sudo -u tomcat rm -rf /home/tomcat/apache-tomcat/work"
+}
+
+task deployWar(type: SshExecTask, dependsOn: [deleteWebApp, copyWarToTmp]) {
+    command = "sudo -u tomcat cp /tmp/web-1.0.0.war /home/tomcat/apache-tomcat/webapps"
+}
+
+task startTomcat(type: SshExecTask, dependsOn: deployWar) {
+    command = "sudo -u tomcat /home/tomcat/apache-tomcat/bin/startup.sh"
+}
