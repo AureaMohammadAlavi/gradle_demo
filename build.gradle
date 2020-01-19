@@ -33,6 +33,14 @@ gradle.taskGraph.whenReady {
     heroku.processTypes(web: "java \$JAVA_OPTS -jar webapp-runner-9.0.30.0.jar --port \$PORT $warFile".toString())
 }
 
+String env = project.hasProperty("env") ? project.property("env") : "local"
+logger.quiet("loading configuration for enviornment \'$env\'")
+def configFile = file("$rootDir/config/environment.groovy")
+def parsedConfig = new ConfigSlurper(env).parse(configFile.toURI().toURL())
+if (parsedConfig.server.keyfile) {
+    parsedConfig.server.keyfile = parsedConfig.server.keyfile.replace('$projectDir', "$rootDir")
+}
+
 allprojects {
     group = "me.smash"
     version = new ProjectVersion(1, 0, System.env.BUILD_NUMBER)
@@ -51,6 +59,7 @@ allprojects {
             property "sonar.host.url", System.getenv("SONAR_SERVER_URL") ?: "http://localhost:9000"
         }
     }
+    ext.config = parsedConfig
 }
 
 subprojects {
@@ -199,17 +208,17 @@ dependencies {
 }
 
 tasks.withType(SshExecTask) {
-    username = "vagrant"
-    remoteHost = "192.168.33.10"
-    keyFile = file("$rootDir/tomcat-vagrant/.vagrant/machines/tomcat/virtualbox/private_key")
+    username = config.server.username
+    remoteHost = config.server.hostname
+    keyFile = file(config.server.keyfile)
     classpath = configurations.jsch
 }
 
 task copyWarToTmp(type: ScpTask, dependsOn: ":web:war") {
-    username = "vagrant"
+    username = config.server.username
     destinationDir = "/tmp"
-    remoteHost = "192.168.33.10"
-    keyFile = file("$rootDir/tomcat-vagrant/.vagrant/machines/tomcat/virtualbox/private_key")
+    remoteHost = config.server.hostname
+    keyFile = file(config.server.keyfile)
     classpath = configurations.jsch
 }
 
@@ -218,13 +227,16 @@ task shutDownTomcat(type: SshExecTask) {
 }
 
 task deleteWebApp(type: SshExecTask, dependsOn: shutDownTomcat) {
-    command = "sudo -u tomcat rm -rf /home/tomcat/apache-tomcat/webapps/web-1.0.0 && " +
-            "sudo -u tomcat rm /home/tomcat/apache-tomcat/webapps/web-1.0.0.war || true && " +
+    command = "sudo -u tomcat rm -rf /home/tomcat/apache-tomcat/webapps/todo && " +
+            "sudo -u tomcat rm /home/tomcat/apache-tomcat/webapps/todo.war || true && " +
             "sudo -u tomcat rm -rf /home/tomcat/apache-tomcat/work"
 }
 
 task deployWar(type: SshExecTask, dependsOn: [deleteWebApp, copyWarToTmp]) {
-    command = "sudo -u tomcat cp /tmp/web-1.0.0.war /home/tomcat/apache-tomcat/webapps"
+    gradle.taskGraph.whenReady {
+        def warName = project(':web').tasks.withType(War).first().archiveFileName.get()
+        command = "sudo -u tomcat cp /tmp/$warName /home/tomcat/apache-tomcat/webapps/todo.war"
+    }
 }
 
 task startTomcat(type: SshExecTask, dependsOn: deployWar) {
