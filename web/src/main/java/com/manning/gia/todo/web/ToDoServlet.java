@@ -4,6 +4,9 @@ import com.manning.gia.todo.model.ToDoItem;
 import com.manning.gia.todo.repository.H2ToDoRepository;
 import com.manning.gia.todo.repository.ToDoRepository;
 
+import java.io.InputStream;
+import java.util.Objects;
+import java.util.Properties;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -19,6 +22,15 @@ public class ToDoServlet extends HttpServlet {
   public static final String INDEX_PAGE = "/jsp/todo-list.jsp";
   private final ToDoRepository toDoRepository = new H2ToDoRepository();
 
+  private static String getVersion() throws IOException {
+    try (InputStream resourceAsStream = ToDoServlet.class.getClassLoader().getResourceAsStream(
+        ToDoServlet.class.getPackage().getName().replace(".", "/") + "/version.properties")) {
+      Properties properties = new Properties();
+      properties.load(Objects.requireNonNull(resourceAsStream));
+      return properties.getProperty("version");
+    }
+  }
+
   @Override
   protected void service(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
@@ -31,7 +43,7 @@ public class ToDoServlet extends HttpServlet {
     }
   }
 
-  private String processRequest(String servletPath, HttpServletRequest request) {
+  private String processRequest(String servletPath, HttpServletRequest request) throws IOException {
     switch (servletPath) {
       case FIND_ALL_SERVLET_PATH:
         return handleAll(request);
@@ -106,19 +118,22 @@ public class ToDoServlet extends HttpServlet {
     return "/" + request.getParameter("filter");
   }
 
-  private String handleStatus(HttpServletRequest request, boolean active, String filter) {
+  private String handleStatus(HttpServletRequest request, boolean active, String filter)
+      throws IOException {
     List<ToDoItem> toDoItems = toDoRepository.findAll();
     request.setAttribute("toDoItems", filterBasedOnStatus(toDoItems, active));
     request.setAttribute("stats", determineStats(toDoItems));
     request.setAttribute("filter", filter);
+    request.setAttribute("version", getVersion());
     return INDEX_PAGE;
   }
 
-  private String handleAll(HttpServletRequest request) {
+  private String handleAll(HttpServletRequest request) throws IOException {
     List<ToDoItem> toDoItems = toDoRepository.findAll();
     request.setAttribute("toDoItems", toDoItems);
     request.setAttribute("stats", determineStats(toDoItems));
     request.setAttribute("filter", "all");
+    request.setAttribute("version", getVersion());
     return INDEX_PAGE;
   }
 

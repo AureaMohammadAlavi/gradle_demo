@@ -41,6 +41,12 @@ if (parsedConfig.server.keyfile) {
     parsedConfig.server.keyfile = parsedConfig.server.keyfile.replace('$projectDir', "$rootDir")
 }
 
+println "---------------------------------------"
+println "username = $parsedConfig.server.username"
+println "remoteHost = $parsedConfig.server.hostname"
+println "keyFile = $parsedConfig.server.keyfile"
+println "---------------------------------------"
+
 allprojects {
     group = "me.smash"
     version = new ProjectVersion(1, 0, System.env.BUILD_NUMBER)

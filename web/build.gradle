@@ -220,6 +220,15 @@ war {
             }
         }
     }
+    doFirst {
+        Properties properties = new Properties()
+        properties.version = project.version.toString()
+        File propertiesFile = file("$buildDir/resources/main/com/manning/gia/todo/web/version.properties")
+        propertiesFile.parentFile.mkdirs()
+        propertiesFile.withOutputStream {
+            properties.store(it, null)
+        }
+    }
 }
 
 task codeQualityCheck(type: JavaExec) {
