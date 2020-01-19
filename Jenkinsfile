@@ -101,10 +101,10 @@ pipeline {
     }
     post {
         failure {
-            mail to: 'm.alavi1986@gmail.com', subject: 'Build failed', body: '$DEFAULT_CONTENT'
+            mail to: 'm.alavi1986@gmail.com', subject: 'Build failed', body: "$DEFAULT_CONTENT"
         }
         success {
-            mail to: 'm.alavi1986@gmail.com', subject: 'Build succeeded', body: '$DEFAULT_CONTENT'
+            mail to: 'm.alavi1986@gmail.com', subject: 'Build succeeded', body: "$DEFAULT_CONTENT"
         }
     }
 }
